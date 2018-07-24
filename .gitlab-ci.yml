@@ -1,0 +1,88 @@
+# Gitlab-CI Pipeline
+#
+# This pipeline will define the following stages and workflow:
+# - on all git pushes, on every branch, linting and tests, and mkdocs (development) will be run
+#   - linting is allowed to fail, but this should be restricted in the future
+# - on pushes or merges to master, mkdocs
+#
+# Author: Maura Hausman <mhausman@wayfair.com>
+# Maintainers: Python Platform Team <pythonplatforms@wayfair.com>
+# Copyright: 2017 Wayfair, LLC
+#
+
+
+stages:
+  - lint
+  - test
+  - docs
+
+.tags: &default_tags
+  tags:
+    - python
+    - docker
+
+###################
+# LINTING TASKS
+###################
+flake8:
+  <<: *default_tags
+  stage: lint
+  variables:
+    python: python3.6
+  script:
+    - virtualenv env -p $python
+    - . env/bin/activate
+    - pip install flake8
+    - flake8
+
+###################
+# TESTING TASKS
+###################
+
+.test-template: &test-template
+  <<: *default_tags
+  stage: test
+  when: always
+  script:
+    - virtualenv venv -p $python
+    - . venv/bin/activate
+    - pip install -r requirements.txt -r requirements-test.txt
+    - . bin/run_tests.sh
+  artifacts:
+    paths:
+    - cov_html
+    expire_in: 1 week
+
+test-3.6:
+  <<: *test-template
+  variables:
+    python: python3.6
+
+###################
+# DOCS TASKS
+###################
+
+# This job updates the live copy of the docs site
+mkdocs:
+  stage: docs
+  tags:
+    - docs
+  script:
+    - cp README.md ./docs/index.md
+    - mkdocs build -d /docs/$CI_PROJECT_PATH
+  only:
+    - master
+
+
+# This job creates/updates development copies of the site for every
+# push to non-master branches
+mkdocs-dev:
+  stage: docs
+  tags:
+    - docs
+  script:
+    - cp README.md ./docs/index.md
+    - mkdir -p /docs/$CI_PROJECT_PATH/_dev/$CI_COMMIT_REF_NAME
+    - mkdocs build -d /docs/$CI_PROJECT_PATH/_dev/$CI_COMMIT_REF_NAME
+  except:
+    - master

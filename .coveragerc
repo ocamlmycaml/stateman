@@ -1,0 +1,11 @@
+[run]
+omit =
+    hello_world/settings/*
+concurrency = gevent
+data_file = /tmp/hello_world_coverage
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover

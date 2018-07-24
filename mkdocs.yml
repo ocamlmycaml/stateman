@@ -1,0 +1,11 @@
+site_name: Stateman Documentation
+repo_url: https://git.csnzoo.com/adhara/stateman
+repo_name: stateman
+docs_dir: docs
+pages:
+  - Overview: index.md
+  - Patterns: manage.md
+theme: material
+markdown_extensions:
+  - codehilite
+  - urlize
