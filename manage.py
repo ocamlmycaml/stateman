@@ -9,11 +9,11 @@ def cli():
 
 
 @cli.command()
-def print_hello_world():
+def say_hello():
     """
     Example command, prints hello world to stdout
     """
-    hello_world.print_hello_world()
+    hello_world.say_hello()
 
 
 if __name__ == "__main__":
