@@ -1,5 +1,5 @@
 import pytest
-from mock import api_calls, data
+from tests.mockdata import api_calls, data
 
 
 @pytest.fixture()
@@ -12,7 +12,7 @@ def mock_api_calls():
     return api_calls
 
 
-@pytest.fixure()
+@pytest.fixture()
 def mock_nodes(mock_data):
     from stateman.node import Node
 
