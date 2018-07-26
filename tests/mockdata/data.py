@@ -27,7 +27,8 @@ NODES = {
             'type': 'job',
             'job_type': 'extract',
             'collection': 'skyloft_us',
-            'bclgid': 1
+            'bclgid': 1,
+            'status': 'stopped'
         }
     },
     'publish.skyloft_us.solrcloudc3': {
@@ -37,7 +38,8 @@ NODES = {
             'job_type': 'publish',
             'collection': 'skyloft_us',
             'target': 'solrcloudc3',
-            'bclgid': 1
+            'bclgid': 1,
+            'status': 'stopped'
         }
     },
     'publish.skyloft_us.solrcloudc4': {
@@ -47,7 +49,8 @@ NODES = {
             'job_type': 'publish',
             'collection': 'skyloft_us',
             'target': 'solrcloudc4',
-            'bclgid': 1
+            'bclgid': 1,
+            'status': 'stopped'
         }
     },
 }

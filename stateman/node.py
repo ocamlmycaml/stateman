@@ -1,4 +1,4 @@
-from stateman.utils import Transitionable, Validatable
+from stateman.utils import Transitionable, Validatable, global_transition_functions
 
 
 class StateNode(Transitionable, Validatable):
