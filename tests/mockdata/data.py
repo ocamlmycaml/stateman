@@ -1,53 +1,61 @@
 NODES = {
     'root': {
         'path': '/',
-        'props': {
+        'state': {
             'name': 'root'
         }
     },
-    'solrcloudc3': {
-        'path': '/solrcloud/solrcloudc3',
-        'props': {
-            'name': 'SolrCloud C3',
-            'type': 'cluster',
-            'application': 'solrcloud',
-            'cluster': 'C3'
+    'javaadmin01': {
+        'path': '/javaadmin01',
+        'state': {
+            'type': 'host',
+            'datacenter': 'bo1',
+            'status': 'up'
         }
     },
-    'solrcloudc4': {
-        'path': '/solrcloud/solrcloudc4',
-        'props': {
-            'name': 'SolrCloud C4',
-            'type': 'cluster',
-            'application': 'solrcloud',
-            'cluster': 'C4'
+    'javaadmin02': {
+        'path': '/javaadmin02',
+        'state': {
+            'type': 'host',
+            'datacenter': 'bo1',
+            'status': 'down'
         }
     },
-    'solrcloudc3n01': {
-        'path': '/solrcloud/solrcloudc3/n01',
-        'props': {
-            'name': 'SolrCloud C3',
-            'type': 'node',
-            'application': 'solrcloud',
-            'cluster': 'C3',
-            'node': 1
+    'extract.skyloft_us': {
+        'path': '/javaadmin01/extract.skyloft_us',
+        'state': {
+            'type': 'job',
+            'job_type': 'extract',
+            'collection': 'skyloft_us',
+            'bclgid': 1
         }
     },
-    'solrcloudc3n02': {
-        'path': '/solrcloud/solrcloudc3/n02',
-        'props': {
-            'name': 'SolrCloud C3',
-            'type': 'cluster',
-            'application': 'solrcloud',
-            'cluster': 'C3',
-            'node': 2
+    'publish.skyloft_us.solrcloudc3': {
+        'path': '/javaadmin01/publish.skyloft_us.solrcloudc4',
+        'state': {
+            'type': 'job',
+            'job_type': 'publish',
+            'collection': 'skyloft_us',
+            'target': 'solrcloudc3',
+            'bclgid': 1
+        }
+    },
+    'publish.skyloft_us.solrcloudc4': {
+        'path': '/javaadmin01/publish.skyloft_us.solrcloudc4',
+        'state': {
+            'type': 'job',
+            'job_type': 'publish',
+            'collection': 'skyloft_us',
+            'target': 'solrcloudc4',
+            'bclgid': 1
         }
     },
 }
 
 EDGES = [
-    (NODES['root'], NODES['solrcloudc3']),
-    (NODES['root'], NODES['solrcloudc4']),
-    (NODES['solrcloudc3'], NODES['solrcloudc3n01']),
-    (NODES['solrcloudc3'], NODES['solrcloudc3n02'])
+    (NODES['root'], NODES['javaadmin01']),
+    (NODES['root'], NODES['javaadmin02']),
+    (NODES['javaadmin01'], NODES['extract.skyloft_us']),
+    (NODES['javaadmin01'], NODES['publish.skyloft_us.solrcloudc3']),
+    (NODES['javaadmin01'], NODES['publish.skyloft_us.solrcloudc4']),
 ]

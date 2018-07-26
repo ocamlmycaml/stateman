@@ -14,9 +14,9 @@ def mock_api_calls():
 
 @pytest.fixture()
 def mock_nodes(mock_data):
-    from stateman.node import Node
+    from stateman.node import StateNode
 
     return {
-        key: Node(name=value['name'], **value['props'])
+        key: StateNode(name=value['name'], **value['props'])
         for key, value in mock_data.items()
     }

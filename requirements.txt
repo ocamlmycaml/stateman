@@ -1,3 +1,4 @@
 click
 wf_logging
 gevent
+networkx
