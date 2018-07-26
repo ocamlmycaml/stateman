@@ -6,7 +6,7 @@ eval "$(pyenv init -)"
 
 pyenv activate stateman
 
-pytest --cov=stateman ./tests
+pytest --cov-report html --cov=stateman ./tests
 
 echo "Running flake8..."
 
