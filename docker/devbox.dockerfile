@@ -1,6 +1,13 @@
-ARG DOCKER_REGISTRY=${DOCKER_REGISTRY:-artifactory.service.bo1.csnzoo.com}
-ARG BASE_OS=${BASE_OS:-centos73}
-FROM ${DOCKER_REGISTRY}/wayfair/python/${BASE_OS}-devbox:0.2.0
+FROM python:3.6-alpine
 
-RUN /pyenv/versions/stateman/bin/pip install --only-binary :all -r requirements-test.txt
+RUN apk update && apk add --no-cache build-base
+WORKDIR /app
 
+# python reqs
+COPY ./requirements.txt .
+COPY ./requirements-test.txt .
+RUN pip install --no-cache-dir \
+    -r requirements.txt \
+    -r requirements-test.txt
+
+CMD [ "python" ]

@@ -3,45 +3,15 @@ services:
 
   # "devbox" to enable the developer to have a fully loaded development environment
   # to test new code using say IPython and other common tools.
-  devbox:
+  devbox: &devbox
     build:
       dockerfile: ./docker/devbox.dockerfile
       context: .
-      args: &args
-      - BASE_OS=centos73
-      - PYTHON_VERSION=python3.6
-      - PROJECT_NAME=stateman
-    environment:
-      PYENV_VERSION: "stateman"
-      LC_ALL: 'en_US.UTF-8'
-      LANG: 'en_US.UTF-8'
-    image: "wayfair/stateman-devbox"
-    command: /bin/bash
+    image: "ocamlmycaml/stateman-devbox"
+    command: python
     volumes:
-    - venv:/pyenv/versions/stateman
     - ./:/app
-    - home:/root
-    - ./docker/files/wf-config.ini:/wayfair/etc/wf-config.ini
-    - ./docker/files/secrets/:/wayfair/etc/priv/credentials/
 
   test:
-    environment:
-      PYTHONPATH: "/app"
-      TZ: 'US/Eastern'
-      PYTHON_VERSION: "stateman"
-    build:
-      dockerfile: ./docker/devbox.dockerfile
-      context: .
-      args: *args
+    <<: *devbox
     entrypoint: sh docker/run_tests.sh
-    image: "wayfair/stateman-devbox"
-    command: /bin/bash
-    volumes:
-    - ./:/app
-    - ./docker/files/wf-config.ini:/wayfair/etc/wf-config.ini
-
-volumes:
-  home:
-  venv:
-  wayfair-data:
-    driver: local
