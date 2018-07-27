@@ -92,8 +92,11 @@ def test_node_class_create_func():
 
 def _validate_neighbors(node, expected_neighbor_states):
     neighbors = node.get_transitions_and_neighbors()
-    neighbors = {key: value.state for key, value in neighbors.items()}
-    assert neighbors == expected_neighbor_states
+    for neighbor in neighbors.values():
+        assert neighbor.path == node.path
+
+    neighbor_states = {key: value.state for key, value in neighbors.items()}
+    assert neighbor_states == expected_neighbor_states
 
 
 def test_node_finds_next_transitions(transition_node_cls):
