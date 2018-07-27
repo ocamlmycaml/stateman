@@ -108,11 +108,27 @@ class StateGraph(Validatable):
         self.graph = nx.DiGraph()
         self.nodes = {}
 
-        self.nodes['/'] = StateNode(pathh='/', name='root')
+        self.root = StateNode(path='/', name='root')
+        self.nodes['/'] = self.root
         self.graph.add_node(self.nodes['/'])
+
+    def add_nodes(self, nodes):
+        for node in nodes:
+            assert isinstance(node, StateNode)
+            assert node.path_string not in self.nodes
+
+            self.nodes[node.path_string] = node
+            self.graph.add_node(node)
+
+    def add_edges(self, edges):
+        for left, right in edges:
+            self.graph.add_edge(self.nodes[left], self.nodes[right])
 
     def populate(self):
         raise NotImplementedError()
+
+    def get_neighbor_state_graphs(self):
+        pass
 
     def reconcile(self, expected_state, dry_run=False):
         """Reconcile's our graph to make it look like the expected_state"""
