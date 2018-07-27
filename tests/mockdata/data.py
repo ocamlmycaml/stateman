@@ -1,10 +1,4 @@
 NODES = {
-    'root': {
-        'path': '/',
-        'state': {
-            'name': 'root'
-        }
-    },
     'javaadmin01': {
         'path': '/javaadmin01',
         'type': 'server',
@@ -32,8 +26,8 @@ NODES = {
     },
     'publish.skyloft_us.solrcloudc3': {
         'path': '/publish/skyloft_us/solrcloudc3',
+        'type': 'job',
         'state': {
-            'type': 'job',
             'job_type': 'publish',
             'collection': 'skyloft_us',
             'target': 'solrcloudc3',
@@ -42,8 +36,8 @@ NODES = {
     },
     'publish.skyloft_us.solrcloudc4': {
         'path': '/publish/skyloft_us/solrcloudc4',
+        'type': 'job',
         'state': {
-            'type': 'job',
             'job_type': 'publish',
             'collection': 'skyloft_us',
             'target': 'solrcloudc4',

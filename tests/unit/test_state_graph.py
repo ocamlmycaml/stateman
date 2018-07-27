@@ -25,4 +25,3 @@ def test_get_neighbor_state_graphs(mock_nodes, mock_edges):
     sg = StateGraph()
     sg.add_nodes(mock_nodes.values())
     sg.add_edges(mock_edges)
-

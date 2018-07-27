@@ -70,9 +70,11 @@ def mock_job_node_cls():
     JobNode.register_transition(from_={'status': 'running'}, to={'status': 'stopped'})(stop_job)
     JobNode.register_transition(from_={'status': 'broken'}, to={'status': 'stopped'})(stop_job)
 
+    return JobNode
+
 
 @pytest.fixture()
-def mock_transitionable_nodes(mock_server_node_cls, mock_job_node_cls, mock_data):
+def mock_nodes(mock_server_node_cls, mock_job_node_cls, mock_data):
     nodes = {}
     for key, value in mock_data.NODES.items():
         if value['type'] == 'job':
