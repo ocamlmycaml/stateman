@@ -6,10 +6,6 @@ global_transition_functions = defaultdict(lambda: defaultdict(dict))
 global_validation_functions = defaultdict(list)
 
 
-def recursive_dijkstra_state_transitions(current_state, desired_state, transitions):
-    raise NotImplementedError()
-
-
 class Transitionable(object):
     """Behavior that allows a class to collect transitions"""
 
@@ -54,41 +50,6 @@ class Transitionable(object):
             return new_func
 
         return decorator
-
-    def get_best_transitions_to(self, desired_state):
-        """Get's transitions that make the most sense to get to the state we want to
-
-        Args:
-            desired_state (Dict[str, object]): state we want to get to
-
-        Yields:
-            Tuple[Tuple[str, object]]: state transition keys
-        """
-        # identify all possible state keys
-        all_state_keys = set()
-        transitions = {}
-        for from_state, to_state_dict in global_transition_functions[self.__class__].items():
-            # build a set of all possible keys in states
-            all_state_keys.update(key for key, _ in from_state)
-            for to_state in to_state_dict:
-                all_state_keys.update(key for key, _ in to_state)
-
-            # build a map of transitions from -> to states (ignoring mapped functions for now)
-            transitions[from_state] = list(to_state_dict.keys())
-
-        # create current state
-        full_current_state = {key: None for key in all_state_keys}
-        full_current_state.update(self.state)
-
-        # create desired state
-        full_desired_state = {**full_current_state, **desired_state}
-
-        # let the magic happen
-        yield from recursive_dijkstra_state_transitions(
-            full_current_state,
-            full_desired_state,
-            transitions
-        )
 
 
 class Validatable(object):

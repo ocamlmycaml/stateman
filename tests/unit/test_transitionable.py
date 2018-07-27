@@ -99,11 +99,3 @@ def test_node_transition_functions_errors(node_cls, transition_func):
 
     with pytest.raises(ValueError):
         transition_func(node)
-
-
-def test_node_fails_invalid_transitions(node_cls, transition_func, transition_func2):
-    node = node_cls.create('/sample/node')
-
-    # let's try to transition to a state that doesn't exist
-    with pytest.raises(ValueError):
-        node.get_best_transitions_to({'name': 'para-transition'})
