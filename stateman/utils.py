@@ -52,6 +52,10 @@ class Transitionable(object):
         return decorator
 
 
+class ValidationError(Exception):
+    pass
+
+
 class Validatable(object):
     """Behavior that allows validations to happen"""
 
@@ -69,7 +73,7 @@ class Validatable(object):
                 node_self (StateNode): node we are transitioning
             """
             if not isinstance(node_self, cls):
-                raise ValueError(f"You can only define transitions for instances of {cls.__name__}")
+                raise ValueError(f"You can only define validations for instances of {cls.__name__}")
 
             func(node_self)
 

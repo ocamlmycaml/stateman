@@ -1,7 +1,7 @@
 import pytest
 
 from stateman.node import StateNode
-from stateman.utils import global_validation_functions
+from stateman.utils import global_validation_functions, ValidationError
 
 
 @pytest.fixture()
@@ -54,7 +54,12 @@ def test_node_total_validation(node_cls, validation_success_func):
 
     @node_cls.register_validation
     def validation_fail(node):
-        raise Exception("Mock failure")
+        raise ValidationError("Mock failure")
 
+    # the functions should raise a ValidationError
+    with pytest.raises(ValidationError):
+        validation_fail(node)
+
+    # node.validation should collect up the exceptions
     with pytest.raises(Exception):
         node.validate()

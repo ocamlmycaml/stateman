@@ -1,6 +1,7 @@
 import pytest
 
 from stateman.node import StateNode
+from stateman.utils import ValidationError
 
 
 @pytest.fixture()
@@ -89,48 +90,74 @@ def test_node_class_create_func():
     assert extra_root.state == {'name': 'root', 'started': True}
 
 
-def test_node_finds_next_transition(transition_node_cls):
+def _validate_neighbors(node, expected_neighbor_states):
+    neighbors = node.get_transitions_and_neighbors()
+    neighbors = {key: value.state for key, value in neighbors.items()}
+    assert neighbors == expected_neighbor_states
+
+
+def test_node_finds_next_transitions(transition_node_cls):
     node = transition_node_cls.create('/sample/node')
+    _validate_neighbors(node, {
+        (('name', 'post-transition'), ('something_else', 'something')): {
+            'name': 'post-transition',
+            'something_else': 'something'
+        },
+        (('blah', 'blah'), ('name', 'post-transition')): {
+            'name': 'post-transition',
+            'blah': 'blah'
+        }
+    })
 
-    # works if you give the exact full version of next transition
-    assert list(node.get_best_transitions_to({'name': 'post-transition', 'something_else': 'something'})) ==\
-        [[{'name': 'post-transition', 'something_else': 'something'}]]
+    # identifies transitions in different states as well
+    node = transition_node_cls.create('/sample/node2', name='post-transition', something_else='something')
+    _validate_neighbors(node, {
+        (('something_else', None),): {
+            'name': 'post-transition'
+        },
+        (('blah', 'blah'),): {
+            'name': 'post-transition',
+            'something_else': 'something',
+            'blah': 'blah'
+        }
+    })
 
-    # doesn't work if you give a superset that doesn't exist
-    assert list(node.get_best_transitions_to({'name': 'para-transition'})) ==\
-        []
+    # doesn't lose extra state info
+    node = transition_node_cls.create('/sample/node3', cat='leopard')
+    _validate_neighbors(node, {
+        (('name', 'post-transition'), ('something_else', 'something')): {
+            'name': 'post-transition',
+            'something_else': 'something',
+            'cat': 'leopard'
+        },
+        (('blah', 'blah'), ('name', 'post-transition')): {
+            'name': 'post-transition',
+            'blah': 'blah',
+            'cat': 'leopard'
+        }
+    })
 
 
-def test_node_finds_multiple_transition(transition_node_cls):
-    node = transition_node_cls.create('/sample/node')
-
-    # works to find two steps
-    assert list(node.get_best_transitions_to({'name': 'post-transition'})) ==\
-        [[{'name': 'post-transition', 'something_else': 'something'}, {'something_else': None}]]
-
-    # identifies shortestt path first, but yields all others
-    assert list(node.get_best_transitions_to({'name': 'post-transition', 'blah': 'blah'})) ==\
-        [
-            [{'name': 'post-transition', 'blah': 'blah'}],
-            [{'name': 'post-transition', 'something_else': 'something'},
-             {'something_else': None},
-             {'blah': 'blah'}]
-        ]
-
-
-@pytest.mark.skip
 def test_node_respects_validations(transition_node_cls):
 
     @transition_node_cls.register_validation
     def mock_validate(node):
-        if node.state['something_else'] == 'something':
-            raise ValueError()
+        if 'something_else' in node.state and node.state['something_else'] == 'something':
+            raise ValidationError()
 
+    # only the blah/blah state should be present:
     node = transition_node_cls.create(path='/node/for/test')
-    assert list(node.get_best_transitions_to({'name': 'post-transition', 'something_else': 'something'})) ==\
-        []
+    _validate_neighbors(node, {
+        (('blah', 'blah'), ('name', 'post-transition'),): {
+            'name': 'post-transition',
+            'blah': 'blah'
+        }
+    })
 
-    assert list(node.get_best_transitions_to({'name': 'post-transition', 'blah': 'blah'})) ==\
-        [
-            [{'name': 'post-transition', 'blah': 'blah'}]
-        ]
+    # if already in an invalid state, we should be able to transition out of it
+    node = transition_node_cls.create(path='/node/for/test/2', something_else='something')
+    _validate_neighbors(node, {
+        (('something_else', None),): {
+            'name': 'pre-transition'
+        }
+    })
