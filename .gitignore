@@ -33,6 +33,8 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache
+.testmondata
+.tmontmp/
 
 # Environments
 .env

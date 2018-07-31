@@ -2,4 +2,6 @@ flake8
 pytest
 pytest-runner
 pytest-cov
+pytest-watch
 mock
+pytest-testmon
