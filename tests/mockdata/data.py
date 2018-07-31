@@ -1,55 +1,73 @@
 NODES = {
-    'javaadmin01': {
-        'path': '/javaadmin01',
+    'node01': {
+        'path': '/node01',
         'type': 'server',
         'state': {
             'datacenter': 'bo1',
             'status': 'up'
         }
     },
-    'javaadmin02': {
-        'path': '/javaadmin02',
+    'node02': {
+        'path': '/node02',
         'type': 'server',
         'state': {
             'datacenter': 'bo1',
-            'status': 'down'
+            'status': 'up'
         }
     },
-    'extract.skyloft_us': {
-        'path': '/extract/skyloft_us',
+    'extract.tweets': {
+        'path': '/extract/tweets',
         'type': 'job',
         'state': {
             'job_type': 'extract',
-            'collection': 'skyloft_us',
+            'data': 'tweets',
             'status': 'stopped'
         }
     },
-    'publish.skyloft_us.solrcloudc3': {
-        'path': '/publish/skyloft_us/solrcloudc3',
+    'extract.likes': {
+        'path': '/extract/likes',
         'type': 'job',
         'state': {
-            'job_type': 'publish',
-            'collection': 'skyloft_us',
-            'target': 'solrcloudc3',
+            'job_type': 'extract',
+            'data': 'likes',
             'status': 'stopped'
         }
     },
-    'publish.skyloft_us.solrcloudc4': {
-        'path': '/publish/skyloft_us/solrcloudc4',
+    'transform.all_events': {
+        'path': '/transform/all_events',
         'type': 'job',
         'state': {
-            'job_type': 'publish',
-            'collection': 'skyloft_us',
-            'target': 'solrcloudc4',
+            'job_type': 'transform',
+            'data': 'all_events',
+            'status': 'stopped'
+        }
+    },
+    'load.all_events.postgres': {
+        'path': '/load/all_events/postgres',
+        'type': 'job',
+        'state': {
+            'job_type': 'load',
+            'sink': 'postgres',
+            'status': 'stopped'
+        }
+    },
+    'load.all_events.elasticsearch': {
+        'path': '/load/all_events/elasticsearch',
+        'type': 'job',
+        'state': {
+            'job_type': 'load',
+            'sink': 'elasticsearch',
             'status': 'stopped'
         }
     },
 }
 
 EDGES = [
-    ('/', '/javaadmin01'),
-    ('/', '/javaadmin02'),
-    ('/javaadmin01', '/extract/skyloft_us'),
-    ('/javaadmin01', '/publish/skyloft_us/solrcloudc3'),
-    ('/javaadmin01', '/publish/skyloft_us/solrcloudc4'),
+    ('/', '/node01'),
+    ('/', '/node02'),
+    ('/node01', '/extract/tweets'),
+    ('/node02', '/extract/likes'),
+    ('/node01', '/transform/all_events'),
+    ('/node02', '/load/all_events/postgres'),
+    ('/node01', '/load/all_events/elasticsearch'),
 ]

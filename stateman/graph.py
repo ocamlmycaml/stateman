@@ -124,10 +124,7 @@ class StateGraph(Validatable):
         for left, right in edges:
             self.graph.add_edge(self.nodes[left], self.nodes[right])
 
-    def populate(self):
-        raise NotImplementedError()
-
-    def get_neighbor_state_graphs(self):
+    def get_transitions_and_neighbors(self):
         pass
 
     def reconcile(self, expected_state, dry_run=False):

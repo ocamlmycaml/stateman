@@ -23,3 +23,6 @@ docker-test:
 
 test:
 	@pytest tests
+
+test-watch:
+	ptw -- --testmon
