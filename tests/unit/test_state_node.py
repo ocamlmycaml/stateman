@@ -66,7 +66,7 @@ def test_node_create_root():
 def test_node_create_with_state_data(mock_data):
     """Ensures a node gets created"""
 
-    test_node = mock_data.NODES['extract.skyloft_us']
+    test_node = mock_data.NODES['extract.tweets']
     actual_node = StateNode(path=test_node['path'], **test_node['state'])
     actual_path = tuple(test_node['path'][1:].split('/'))
 
