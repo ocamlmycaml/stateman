@@ -4,4 +4,4 @@ python:
 install:
   - pip install -r requirements.txt -r requirements-test.txt
 script:
-  - sh docker/run_tests.sh
+  - docker/run_tests.sh
