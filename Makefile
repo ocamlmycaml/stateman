@@ -22,7 +22,10 @@ docker-test:
 	@docker-compose run test
 
 test:
-	@pytest tests
+	@pytest --cov-report=html --cov-report=term --cov=stateman ./tests
+
+lint:
+	@flake8
 
 test-watch:
 	ptw -- --testmon

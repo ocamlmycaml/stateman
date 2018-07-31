@@ -14,4 +14,4 @@ services:
 
   test:
     <<: *devbox
-    entrypoint: sh docker/run_tests.sh
+    entrypoint: make test && make lint
