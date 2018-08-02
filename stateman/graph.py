@@ -3,7 +3,7 @@ import heapq
 import networkx as nx
 
 from stateman.node import StateNode
-from stateman.utils import Validatable
+from stateman.utils import Validatable, global_validation_functions, ValidationError
 
 
 class PriorityItem(object):
@@ -66,26 +66,8 @@ def _a_star_valid_state_transitions(
                 for transition_tuple in reversed(transitions)
             ]
 
-        # identify our "neighbor" states
-        neighbors = {}
-        for from_state_props, transitions in possible_transitions.items():
-            if all((item in current) for item in from_state_props):
-                for transition in transitions:
-                    # who we tryna be
-                    neighbor = {**dict(current), **dict(transition)}
-
-                    valid = True
-                    for validation_func in validations:
-                        try:
-                            validation_func(neighbor)
-                        except Exception as e:
-                            valid = False
-                            break
-
-                    if valid:
-                        neighbors[transition] = tuple(sorted(neighbor.items()))
-
         # keep doing the a-star dance
+        neighbors = current.get_transitions_and_neighbors()
         for transition, neighbor in neighbors.items():
             new_cost = cost_so_far[current] + 1
             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
@@ -101,16 +83,18 @@ class StateGraph(Validatable):
     Attributes:
         graph (DiGraph): a directed graph of StateNodes that depend on each other
         nodes (Dict[str, StateNode]): path -> nodes mappings for quick lookup
-        validations (List[function]): validations to be performed against this graph
     """
 
-    def __init__(self):
-        self.graph = nx.DiGraph()
-        self.nodes = {}
+    def __init__(self, graph=None, nodes=None):
+        if not graph:
+            graph = nx.DiGraph()
+        self.graph = graph
 
-        self.root = StateNode(path='/', name='root')
-        self.nodes['/'] = self.root
-        self.graph.add_node(self.nodes['/'])
+        if not nodes:
+            nodes = {}
+            nodes['/'] = StateNode(path='/', name='root')
+            self.graph.add_node(nodes['/'])
+        self.nodes = nodes
 
     def add_nodes(self, nodes):
         for node in nodes:
@@ -125,7 +109,46 @@ class StateGraph(Validatable):
             self.graph.add_edge(self.nodes[left], self.nodes[right])
 
     def get_transitions_and_neighbors(self):
-        pass
+        validations = global_validation_functions.get(self.__class__, [])
+        neighbors = {}
+
+        for node in self.graph.nodes():
+            # each node has a path it can take, so this graph can "transition" in the way that
+            # each of the nodes does such a transition
+            node_neighbors = node.get_transitions_and_neighbors()
+            for node_transition, new_node in node_neighbors.items():
+                new_graph = StateGraph(
+                    graph=nx.DiGraph(self.graph),
+                    nodes=dict(self.nodes)
+                )
+
+                # cool so we have a new node! let's populate the graph with the new node
+                new_graph.nodes[new_node.path_string] = new_node
+                new_graph.graph.add_node(new_node)
+                new_graph.graph.add_edges_from([
+                    (new_node, dest)
+                    for _, dest in new_graph.graph.out_edges(node)
+                ] + [
+                    (source, new_node)
+                    for source, _ in new_graph.graph.in_edges(node)
+                ])
+                new_graph.graph.remove_node(node)
+
+                # make sure we can go there using our validations
+                valid = True
+                for validation_func in validations:
+                    try:
+                        validation_func(new_graph)
+                    except ValidationError as e:
+                        valid = False
+                        break
+
+                if valid:
+                    # phew! now we can associate this "transtition" to the new graph
+                    transition = (node.path_string, node_transition)
+                    neighbors[transition] = new_graph
+
+        return neighbors
 
     def reconcile(self, expected_state, dry_run=False):
         """Reconcile's our graph to make it look like the expected_state"""

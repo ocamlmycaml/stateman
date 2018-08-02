@@ -16,6 +16,9 @@ class Transitionable(object):
             """This decorates the function, but also registers the function in the class's transition_functions
             dictinoary as a transition to the new state"""
 
+            if not to:
+                raise ValueError("'to' state must be non-empty")
+
             from_state_key = tuple(sorted(from_.items()))
             to_state_key = tuple(sorted(to.items()))
             global_transition_functions[cls][from_state_key][to_state_key] = func

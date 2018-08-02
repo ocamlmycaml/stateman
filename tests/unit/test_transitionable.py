@@ -66,6 +66,24 @@ def test_node_transition_register_wrapper(node_cls, transition_func, transition_
     assert to_2 in global_transition_functions[node_cls][from_2]
 
 
+def test_node_allows_empty_from(node_cls):
+    @node_cls.register_transition(from_={}, to={'transitioned': True})
+    def transition(node):
+        pass
+
+    node = node_cls.create('/')
+    assert node.state == {'name': 'pre-transition'}
+    transition(node)
+    assert node.state == {'name': 'pre-transition', 'transitioned': True}
+
+
+def test_node_doesnt_allow_empty_to(node_cls):
+    with pytest.raises(ValueError):
+        @node_cls.register_transition(from_={'name': 'pre-transition'}, to={})
+        def transition(node):
+            pass
+
+
 def test_node_performs_transition(node_cls, transition_func, transition_func2):
     # now check if the transitioning logic works
     node = node_cls.create('/')
