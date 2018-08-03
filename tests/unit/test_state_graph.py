@@ -287,5 +287,31 @@ def test_graph_find_shortest_path_multiple_nodes_and_edges(mock_state_node_cls, 
     }]
 
 
-def test_state_graph_picks_most_efficient_route(transition_node_cls, state_graph_cls):
-    pass
+def test_state_graph_takes_multiple_steps(transition_node_cls, state_graph_cls):
+    sg = state_graph_cls()
+    sg.add_nodes([transition_node_cls.create('/child')])
+    sg2 = state_graph_cls()
+    sg2.add_nodes([transition_node_cls.create('/child', name='post-transition')])
+
+    assert sg.take_shortest_path_to(sg2, dry_run=True) == [{
+        'node': '/child',
+        'from_state': {'name': 'pre-transition'},
+        'to_state': {'name': 'post-transition', 'something_else': 'something'},
+        'execution_result': {'dry_run': True}
+    }, {
+        'node': '/child',
+        'from_state': {'something_else': 'something'},
+        'to_state': {'something_else': None},
+        'execution_result': {'dry_run': True}
+    }]
+    assert sg.take_shortest_path_to(sg2) == [{
+        'node': '/child',
+        'from_state': {},
+        'to_state': {'blah': 'blah'},
+        'execution_result': None
+    }, {
+        'node': '/',
+        'from_state': {},
+        'to_state': {'blah': 'blah'},
+        'execution_result': None
+    }]

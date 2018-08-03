@@ -2,7 +2,7 @@ import pytest
 import mock
 
 
-@pytest.fixture()
+@pytest.fixture(scope='function')
 def transition_node_cls(node_cls):
     @node_cls.register_transition(
         from_={
