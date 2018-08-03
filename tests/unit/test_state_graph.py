@@ -2,6 +2,8 @@ import mock
 
 import pytest
 
+from stateman.utils import ValidationError
+
 
 @pytest.fixture(scope="function")
 def state_node_cls():
@@ -153,3 +155,98 @@ def test_connected_state_graph_transitions(state_node_cls, state_graph_cls):
     # check that edges are correct
     assert list(neighbor_root.graph.edges()) == [(neighbor_root.nodes['/'], neighbor_root.nodes['/child'])]
     assert list(neighbor_child.graph.edges()) == [(neighbor_child.nodes['/'], neighbor_child.nodes['/child'])]
+
+
+def test_state_graph_equality(state_graph_cls, state_node_cls):
+    # empty graphs are equal (only root node to compare)
+    lg = state_graph_cls()
+    rg = state_graph_cls()
+    assert lg.has_same_state(rg)
+
+    # different states are unequal
+    lg.nodes['/'].state['blah'] = 'blah'
+    assert not lg.has_same_state(rg)
+
+    # two unconnected nodes
+    lg = state_graph_cls()
+    rg = state_graph_cls()
+    lg.add_nodes([state_node_cls(path='/blah', name='blah')])
+    rg.add_nodes([state_node_cls(path='/blah', name='blah')])
+    assert lg.has_same_state(rg)
+
+    # different states are unequal
+    lg.nodes['/blah'].state['name'] = 'blahtito'
+    assert not lg.has_same_state(rg)
+
+    # two connected nodes - edges must match
+    lg = state_graph_cls()
+    rg = state_graph_cls()
+    lg.add_nodes([state_node_cls(path='/blah', name='blah')])
+    rg.add_nodes([state_node_cls(path='/blah', name='blah')])
+    lg.add_edges([('/', '/blah')])
+    assert not lg.has_same_state(rg)
+    rg.add_edges([('/', '/blah')])
+    assert lg.has_same_state(rg)
+
+    # different states are again unequal
+    lg.nodes['/blah'].state['name'] = 'blahtito'
+    assert not lg.has_same_state(rg)
+
+    # different direction edges don't count for anything
+    lg = state_graph_cls()
+    rg = state_graph_cls()
+    lg.add_nodes([state_node_cls(path='/blah', name='blah')])
+    rg.add_nodes([state_node_cls(path='/blah', name='blah')])
+    lg.add_edges([('/', '/blah')])
+    rg.add_edges([('/blah', '/')])
+    assert not lg.has_same_state(rg)
+
+
+def test_graph_neighbors_validation_fails_removed(state_node_cls, state_graph_cls):
+    @state_graph_cls.register_validation
+    def validate(graph):
+        if 'blah' in graph.nodes['/'].state \
+           and graph.nodes['/'].state['blah'] == 'blah':
+            raise ValidationError("a root can't be 'blah'")
+
+    @state_node_cls.register_transition(from_={}, to={'blah': 'blah'})
+    def transition(node):
+        pass
+
+    g = state_graph_cls()
+    assert g.get_transitions_and_neighbors() == {}
+
+    g.add_nodes([state_node_cls.create('/blah')])
+    neighbors = g.get_transitions_and_neighbors()
+    assert ('/blah', (('blah', 'blah'),)) in neighbors
+    neighbor = neighbors[('/blah', (('blah', 'blah'),))]
+    assert neighbor.nodes['/'].state == {'name': 'root'}
+    assert neighbor.nodes['/blah'].state == {'blah': 'blah'}
+
+
+def test_graph_find_shortest_path_noop(state_node_cls, state_graph_cls):
+    sg = state_graph_cls()
+    sg2 = state_graph_cls()
+    assert sg.take_shortest_path_to(sg2, dry_run=True) == []
+    assert sg.take_shortest_path_to(sg2) == []
+
+
+def test_graph_find_shortest_path_single_node(state_node_cls, state_graph_cls):
+    @state_node_cls.register_transition(from_={}, to={'blah': 'blah'})
+    def transition(node):
+        pass
+
+    sg = state_graph_cls()
+    sg2 = state_graph_cls()
+    sg2.nodes['/'].state['blah'] = 'blah'
+
+    assert sg.take_shortest_path_to(sg2, dry_run=True) == [{
+        'node': '/',
+        'transition': {'blah': 'blah'},
+        'execution_result': {'dry_run': True}
+    }]
+    assert sg.take_shortest_path_to(sg2) == [{
+        'node': '/',
+        'transition': {'blah': 'blah'},
+        'execution_result': None
+    }]

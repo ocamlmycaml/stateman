@@ -3,7 +3,7 @@ import heapq
 import networkx as nx
 
 from stateman.node import StateNode
-from stateman.utils import Validatable, global_validation_functions, ValidationError
+from stateman.utils import Validatable, ValidationError, global_validation_functions, global_transition_functions
 
 
 class PriorityItem(object):
@@ -15,17 +15,21 @@ class PriorityItem(object):
         return self.priority < other.priority
 
 
-def _a_star_heuristic(state_from, state_to):
-    """Since we're working with the sorted tuple representations of dictionaries, we just have to
-    identify how many of the (key, value) tuples of state_from are in state_to"""
-    return [(pair in state_to) for pair in state_from].count(True)
+def _a_star_heuristic(state_graph_from, state_graph_to):
+    """Since we're working with a state_graph, we'd need to ensure the distances between all nodes is taken into account"""
+    dist = 0
+    for node_path in state_graph_from.nodes.keys():
+        node_state_from = tuple(sorted(state_graph_from.nodes[node_path].state.items()))
+        node_state_to = tuple(sorted(state_graph_to.nodes[node_path].state.items()))
+        dist += [(pair in node_state_to) for pair in node_state_from].count(True)
+
+    return dist
 
 
 def _a_star_valid_state_transitions(
-        current_state,
-        desired_state,
-        possible_transitions,
-        validations
+        current_state_graph,
+        desired_state_graph,
+        max_iterations=10000
 ):
     """This function uses an A* graph search algorithm to find the minimal set of transitions to a particular
     state
@@ -33,38 +37,39 @@ def _a_star_valid_state_transitions(
     shamelessly copied from: https://www.redblobgames.com/pathfinding/a-star/implementation.html#python-astar
 
     Args:
-        current_state (Dict[str, str]): where we are
-        desired_state (Dict[str, str]): where we want to be
-        possible_transitions (Dict[Tuple(Tuple(str, str)), Tuple(Tuple(str, str))]): what it says
-        validations (List[func]): functions to validate transition
+        current_state_graph (StateGraph): where we are
+        desired_state (StateGraph): where we want to be
+        max_iterations (int): maximum iterations through the graph to try
 
     Yields:
-        List[Tuple[Tuple[str, str]]: list of transitions
+        List[Tuple[str, Tuple[str, str]]: list of (node_path, (..transition_to_make..))
     """
     frontier = []  # priority queue of (priority, state) tuples
-    heapq.heappush(frontier, PriorityItem(0, current_state))
+    heapq.heappush(frontier, PriorityItem(0, current_state_graph))
 
     came_from = {}
     cost_so_far = {}
-    came_from[current_state] = None
-    cost_so_far[current_state] = 0
+    came_from[current_state_graph] = None
+    cost_so_far[current_state_graph] = 0
 
+    iterations = 0
     while len(frontier) > 0:
+        iterations += 1
+        if iterations == max_iterations:
+            raise Exception(f"Reached maximum number of iterations when exploring graph: {max_iterations}")
+
         current = heapq.heappop(frontier).item
 
         # if we reached our goal, leggo
-        if current == desired_state:
-            states = [desired_state]
+        if current.has_same_state(desired_state_graph):
+            last_state = current
             transitions = []
-            while came_from[states[-1]] is not None:
-                prev, transition = came_from[states[-1]]
-                states.append(prev)
+            while came_from[last_state] is not None:
+                prev, transition = came_from[last_state]
+                last_state = prev
                 transitions.append(transition)
 
-            yield [
-                dict(transition_tuple)
-                for transition_tuple in reversed(transitions)
-            ]
+            return list(reversed(transitions))
 
         # keep doing the a-star dance
         neighbors = current.get_transitions_and_neighbors()
@@ -72,9 +77,11 @@ def _a_star_valid_state_transitions(
             new_cost = cost_so_far[current] + 1
             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
                 cost_so_far[neighbor] = new_cost
-                priority = new_cost + _a_star_heuristic(neighbor, desired_state)
+                priority = new_cost + _a_star_heuristic(neighbor, desired_state_graph)
                 heapq.heappush(frontier, PriorityItem(priority, neighbor))
                 came_from[neighbor] = (current, transition)
+
+    return []
 
 
 class StateGraph(Validatable):
@@ -150,5 +157,62 @@ class StateGraph(Validatable):
 
         return neighbors
 
-    def reconcile(self, expected_state, dry_run=False):
-        """Reconcile's our graph to make it look like the expected_state"""
+    def take_shortest_path_to(self, expected_state_graph, dry_run=False):
+        """Reconcile's our graph to make it look like the expected_state
+
+        Args:
+            expected_state_graph (StateGraph): where we want to be
+            dry_run (bool): if we should execute associated functions (default: False)
+        """
+        # validate that the graphs have the same nodes and edges
+        assert self.nodes.keys() == expected_state_graph.nodes.keys()
+
+        transitions = _a_star_valid_state_transitions(self, expected_state_graph)
+
+        if dry_run:
+            return [
+                {
+                    'node': node_path,
+                    'transition': dict(transition),
+                    'execution_result': {
+                        'dry_run': True
+                    }
+                }
+                for node_path, transition in transitions
+            ]
+
+        results = []
+        for node_path, transition in transitions:
+            node = self.nodes[node_path]
+            transition_func = global_transition_functions[node.__class__][transition]
+            print(transition_func)
+            result = {
+                'node': node_path,
+                'transition': dict(transition),
+            }
+            try:
+                result['execution_result'] = transition_func(node)
+            except Exception as e:
+                result['exception'] = e
+
+            results.append(result)
+
+        return results
+
+    def has_same_state(self, other):
+        if self.nodes.keys() != other.nodes.keys():
+            return False
+
+        for node_path, node in self.nodes.items():
+            if other.nodes[node_path].state != node.state:
+                return False
+
+        if [(left.path_string, right.path_string) for left, right in self.graph.in_edges()] != \
+                [(left.path_string, right.path_string) for left, right in other.graph.in_edges()]:
+            return False
+
+        if [(left.path_string, right.path_string) for left, right in self.graph.out_edges()] != \
+                [(left.path_string, right.path_string) for left, right in other.graph.out_edges()]:
+            return False
+
+        return True
