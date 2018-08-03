@@ -65,6 +65,8 @@ class StateNode(Transitionable, Validatable):
                             break
 
                     if valid:
-                        neighbors[transition] = neighbor
+                        if from_state_props not in neighbors:
+                            neighbors[from_state_props] = {}
+                        neighbors[from_state_props][transition] = neighbor
 
         return neighbors

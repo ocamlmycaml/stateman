@@ -56,7 +56,7 @@ def _a_star_valid_state_transitions(
     while len(frontier) > 0:
         iterations += 1
         if iterations == max_iterations:
-            raise Exception(f"Reached maximum number of iterations when exploring graph: {max_iterations}")
+            raise Exception(f"Reached maximum number of iterations when exploring states: {max_iterations}")
 
         current = heapq.heappop(frontier).item
 
@@ -123,37 +123,38 @@ class StateGraph(Validatable):
             # each node has a path it can take, so this graph can "transition" in the way that
             # each of the nodes does such a transition
             node_neighbors = node.get_transitions_and_neighbors()
-            for node_transition, new_node in node_neighbors.items():
-                new_graph = StateGraph(
-                    graph=nx.DiGraph(self.graph),
-                    nodes=dict(self.nodes)
-                )
+            for from_state, stuff in node_neighbors.items():
+                for to_state, new_node in stuff.items():
+                    new_graph = StateGraph(
+                        graph=nx.DiGraph(self.graph),
+                        nodes=dict(self.nodes)
+                    )
 
-                # cool so we have a new node! let's populate the graph with the new node
-                new_graph.nodes[new_node.path_string] = new_node
-                new_graph.graph.add_node(new_node)
-                new_graph.graph.add_edges_from([
-                    (new_node, dest)
-                    for _, dest in new_graph.graph.out_edges(node)
-                ] + [
-                    (source, new_node)
-                    for source, _ in new_graph.graph.in_edges(node)
-                ])
-                new_graph.graph.remove_node(node)
+                    # cool so we have a new node! let's populate the graph with the new node
+                    new_graph.nodes[new_node.path_string] = new_node
+                    new_graph.graph.add_node(new_node)
+                    new_graph.graph.add_edges_from([
+                        (new_node, dest)
+                        for _, dest in new_graph.graph.out_edges(node)
+                    ] + [
+                        (source, new_node)
+                        for source, _ in new_graph.graph.in_edges(node)
+                    ])
+                    new_graph.graph.remove_node(node)
 
-                # make sure we can go there using our validations
-                valid = True
-                for validation_func in validations:
-                    try:
-                        validation_func(new_graph)
-                    except ValidationError as e:
-                        valid = False
-                        break
+                    # make sure we can go there using our validations
+                    valid = True
+                    for validation_func in validations:
+                        try:
+                            validation_func(new_graph)
+                        except ValidationError as e:
+                            valid = False
+                            break
 
-                if valid:
-                    # phew! now we can associate this "transtition" to the new graph
-                    transition = (node.path_string, node_transition)
-                    neighbors[transition] = new_graph
+                    if valid:
+                        # phew! now we can associate this "transtition" to the new graph
+                        transition = (node.path_string, from_state, to_state)
+                        neighbors[transition] = new_graph
 
         return neighbors
 
@@ -173,22 +174,24 @@ class StateGraph(Validatable):
             return [
                 {
                     'node': node_path,
-                    'transition': dict(transition),
+                    'from_state': dict(from_state),
+                    'to_state': dict(to_state),
                     'execution_result': {
                         'dry_run': True
                     }
                 }
-                for node_path, transition in transitions
+                for node_path, from_state, to_state in transitions
             ]
 
         results = []
-        for node_path, transition in transitions:
+        for node_path, from_state, to_state in transitions:
             node = self.nodes[node_path]
-            transition_func = global_transition_functions[node.__class__][transition]
+            transition_func = global_transition_functions[node.__class__][from_state][to_state]
             print(transition_func)
             result = {
                 'node': node_path,
-                'transition': dict(transition),
+                'from_state': dict(from_state),
+                'to_state': dict(to_state),
             }
             try:
                 result['execution_result'] = transition_func(node)

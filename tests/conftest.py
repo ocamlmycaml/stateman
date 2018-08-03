@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture()
-def mock_data():
+def dummy_data():
     from tests.mockdata import data
     return data
 
@@ -23,7 +23,7 @@ def node_cls():
 
 
 @pytest.fixture()
-def mock_server_node_cls():
+def server_node_cls():
     """A node to represent a server
 
     Returns:
@@ -40,7 +40,7 @@ def mock_server_node_cls():
 
 
 @pytest.fixture()
-def mock_job_node_cls():
+def job_node_cls():
     """A node class to represent a job
 
     Returns:
@@ -74,17 +74,17 @@ def mock_job_node_cls():
 
 
 @pytest.fixture()
-def mock_nodes(mock_server_node_cls, mock_job_node_cls, mock_data):
+def dummy_data_nodes(server_node_cls, job_node_cls, dummy_data):
     nodes = {}
-    for key, value in mock_data.NODES.items():
+    for key, value in dummy_data.NODES.items():
         if value['type'] == 'job':
-            nodes[key] = mock_job_node_cls(path=value['path'], **value['state'])
+            nodes[key] = job_node_cls(path=value['path'], **value['state'])
         elif value['type'] == 'server':
-            nodes[key] = mock_server_node_cls(path=value['path'], **value['state'])
+            nodes[key] = server_node_cls(path=value['path'], **value['state'])
 
     return nodes
 
 
 @pytest.fixture()
-def mock_edges(mock_data):
-    return mock_data.EDGES
+def dummy_data_edges(dummy_data):
+    return dummy_data.EDGES
