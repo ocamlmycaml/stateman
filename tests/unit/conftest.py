@@ -3,7 +3,21 @@ import mock
 
 
 @pytest.fixture(scope='function')
-def transition_node_cls(node_cls):
+def clean_transitions():
+    from stateman.utils import global_transition_functions, global_validation_functions
+
+    # lets remove all transitions and validation functions
+    keys = list(global_transition_functions.keys())
+    for key in keys:
+        global_transition_functions.pop(key)
+
+    keys = list(global_validation_functions.keys())
+    for key in keys:
+        global_validation_functions.pop(key)
+
+
+@pytest.fixture(scope='function')
+def transition_node_cls(clean_transitions, node_cls):
     @node_cls.register_transition(
         from_={
             'name': 'pre-transition'
@@ -54,37 +68,14 @@ def transition_node_cls(node_cls):
 
 
 @pytest.fixture(scope="function")
-def mock_state_node_cls():
+def mock_state_node_cls(clean_transitions):
     # TODO: Mock this baby
     from stateman.node import StateNode
-    from stateman.utils import global_transition_functions, global_validation_functions
-
-    # lets remove all transitions and validation functions
-    keys = list(global_transition_functions.keys())
-    for key in keys:
-        global_transition_functions.pop(key)
-
-    keys = list(global_validation_functions.keys())
-    for key in keys:
-        global_validation_functions.pop(key)
-
     return StateNode
 
 
 @pytest.fixture(scope="function")
-def state_graph_cls(mock_state_node_cls):
-    from stateman.utils import global_transition_functions, global_validation_functions
-
-    # lets remove all transitions and validation functions
-    keys = list(global_transition_functions.keys())
-    for key in keys:
-        global_transition_functions.pop(key)
-
-    keys = list(global_validation_functions.keys())
-    for key in keys:
-        global_validation_functions.pop(key)
-
-    # lets patch statenode to use what we have fixtured:
+def state_graph_cls(clean_transitions, mock_state_node_cls):
     with mock.patch('stateman.graph.StateNode', mock_state_node_cls):
         from stateman.graph import StateGraph
         yield StateGraph

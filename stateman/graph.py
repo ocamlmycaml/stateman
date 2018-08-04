@@ -214,8 +214,4 @@ class StateGraph(Validatable):
                 [(left.path_string, right.path_string) for left, right in other.graph.in_edges()]:
             return False
 
-        if [(left.path_string, right.path_string) for left, right in self.graph.out_edges()] != \
-                [(left.path_string, right.path_string) for left, right in other.graph.out_edges()]:
-            return False
-
         return True
