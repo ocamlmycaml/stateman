@@ -1,6 +1,6 @@
 import click
 
-from examples import hello_world
+from examples import demo
 
 
 @click.group()
@@ -9,11 +9,9 @@ def cli():
 
 
 @cli.command()
-def say_hello():
-    """
-    Example command, prints hello world to stdout
-    """
-    hello_world.say_hello()
+def run_demo():
+    """Performs a demo, considering a server group with a few nodes"""
+    demo.run_demo()
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ def _a_star_heuristic(state_graph_from, state_graph_to):
 def _a_star_valid_state_transitions(
         current_state_graph,
         desired_state_graph,
-        max_iterations=10000
+        max_iterations=1000000
 ):
     """This function uses an A* graph search algorithm to find the minimal set of transitions to a particular
     state
@@ -125,7 +125,7 @@ class StateGraph(Validatable):
             node_neighbors = node.get_transitions_and_neighbors()
             for from_state, stuff in node_neighbors.items():
                 for to_state, new_node in stuff.items():
-                    new_graph = StateGraph(
+                    new_graph = self.__class__(
                         graph=nx.DiGraph(self.graph),
                         nodes=dict(self.nodes)
                     )
@@ -187,12 +187,12 @@ class StateGraph(Validatable):
         for node_path, from_state, to_state in transitions:
             node = self.nodes[node_path]
             transition_func = global_transition_functions[node.__class__][from_state][to_state]
-            print(transition_func)
             result = {
                 'node': node_path,
                 'from_state': dict(from_state),
                 'to_state': dict(to_state),
             }
+
             try:
                 result['execution_result'] = transition_func(node)
             except Exception as e:

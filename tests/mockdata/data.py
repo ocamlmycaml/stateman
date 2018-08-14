@@ -3,7 +3,7 @@ NODES = {
         'path': '/node01',
         'type': 'server',
         'state': {
-            'datacenter': 'bo1',
+            'datacenter': 'boston',
             'status': 'up'
         }
     },
@@ -11,7 +11,7 @@ NODES = {
         'path': '/node02',
         'type': 'server',
         'state': {
-            'datacenter': 'bo1',
+            'datacenter': 'boston',
             'status': 'up'
         }
     },
@@ -47,7 +47,7 @@ NODES = {
         'type': 'job',
         'state': {
             'job_type': 'load',
-            'sink': 'postgres',
+            'destination': 'postgres',
             'status': 'stopped'
         }
     },
@@ -56,7 +56,7 @@ NODES = {
         'type': 'job',
         'state': {
             'job_type': 'load',
-            'sink': 'elasticsearch',
+            'destination': 'elasticsearch',
             'status': 'stopped'
         }
     },
